@@ -1,0 +1,51 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=870
+
+ Got ideas from following tips and scripts 
+ vimtip #341, vimtip #358, vimscript #668, vimscript #109 
+
+ Usage:
+ When this script is loaded, it will populate an array with each of color 
+ scheme's file path.  You can then load different color schemes using 
+ NextColorScheme(), PreviousColorScheme() or RandomColorScheme(). 
+
+ Or if you don't like current color scheme you can call
+ RemoveCurrentColorScheme() to remove the file.
+
+ There are 4 main functions 
+   1. You can either call them directly
+      :call NextColorScheme()
+      :call PreviousColorScheme() 
+      :call RandomColorScheme()
+      :call RemoveCurrentColorScheme()
+
+   2. You can map and save them in your [._]gvimrc.
+      map <F4>   :call NextColorScheme()<CR>
+      map <S-F4> :call PreviousColorScheme()<CR>
+      map <C-F4> :call RandomColorScheme()<CR>
+      map <F3>   :call RemoveCurrentColorScheme()<CR>
+
+   3. You can also start each vim session with random color scheme by 
+      adding following line in your [._]gvimrc
+      call RandomColorScheme()
+
+ Tip: 
+ You can change your rulerformat in your [._]vimrc to display the name of 
+ current color scheme on status line.
+
+ First, add this line to display status information 
+     set ruler 
+
+ And add %{g:colors_name} in rulerformat to display name of current color 
+  scheme. For example,
+     set rulerformat=%55(:%{g:colors_name}:\ %5l,%-6(%c%V%)\ %P%) 
+
+ However, you will see an error message if you didn't load color scheme at
+ startup. So you might want to add %{GetColorSyntaxName()} instead.
+     set rulerformat=%55(:%{GetColorSyntaxName()}:\ %5l,%-6(%c%V%)\ %P%) 
+
+ GetColorSyntaxName() function is included in this script. It returns
+ the value of g:colors_name if it exists, otherwise an empty string. If you
+ are using a console version, then you might have to copy
+ GetColorSyntaxName() into .vimrc, because I think the plugin files get
+ loaded after evaluating .vimrc.
+
