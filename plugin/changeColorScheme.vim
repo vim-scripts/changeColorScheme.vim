@@ -1,17 +1,17 @@
 "------------------------------------------------------------------------------
 " File: changeColorScheme.vim 
 "------------------------------------------------------------------------------
-" Purpose: Rotate or ramdomize color schemes
-"------------------------------------------------------------------------------
 " Got idea from following tips and scripts 
 " vimtip #341, vimtip #358, vimscript #668, vimscript #109 
 "------------------------------------------------------------------------------
 " Author: Hosup Chung <hosup.chung@gmail.com>
 "
-" Created: 2003 December 31 
-" Last Updated: 2004 August 17
+" Created: 2003 December 31
+" Last Updated: 2006 February 3 
 "
-" Version: 0.12 
+" Version: 0.2
+" 0.2: Updated RandomColorScheme()
+"
 " 0.12: I finally tested this plugin on OS X and Linux
 "       When searching color schemes, substituting eol didn't work on Linux.
 "       I'm using "\n" instead of '\n' now, and it seems working.
@@ -43,18 +43,6 @@
 "      adding following line in your [._]gvimrc
 "      call RandomColorScheme()
 "
-" You can also use different fonts for different color schemes using
-" SetGuiFont(). See the function in this script for the detail.
-"
-"------------------------------------------------------------------------------
-" Note: 
-" If you call RandomColorScheme() numerous times to see how fast color scheme 
-" changes, you were probably surprised to see sometimes it loaded same schemes, 
-" and other times it worked like NextColorScheme().  It's because 
-" RandomColorScheme() uses vim's internal function localtime(). localtime() 
-" returns the current time in seconds (not milliseconds). Thus you get different 
-" number only after each seconds, and even those numbers are sequential. 
-" One of Vim's TODO list is adding function to generate date in milliseconds.
 "------------------------------------------------------------------------------
 " Tip: 
 " You can change your rulerformat in your [._]vimrc to display the name of 
@@ -72,7 +60,10 @@
 "     set rulerformat=%55(:%{GetColorSyntaxName()}:\ %5l,%-6(%c%V%)\ %P%) 
 "
 " GetColorSyntaxName() function is included in this script. It returns
-" the value of g:colors_name if it exists, otherwise an empty string.
+" the value of g:colors_name if it exists, otherwise an empty string. If you
+" are using a console version, then you might have to copy
+" GetColorSyntaxName() into .vimrc, because I think the plugin files get
+" loaded after evaluating .vimrc.
 "------------------------------------------------------------------------------
 
 if !exists("g:change_color_scheme")
@@ -116,16 +107,13 @@ if !exists("g:change_color_scheme")
         return strpart(a:array,current_pos,(array_element_endpos-current_pos))
     endfunction  " ElementAt
 
-
     " If g:colors_name is defined, return the name of current color syntax name.
     " Otherwise return an empty string
     function! GetColorSyntaxName()
         if exists('g:colors_name')
             return g:colors_name
-	    " return g:colors_name.'('.s:scheme_index.':'.s:total_schemes.')'
         else
             return ''
-	    " return '('.s:scheme_index.':'.s:total_schemes.')'
         endif	
     endfunction  "GetColorSyntaxName
 
@@ -134,7 +122,7 @@ if !exists("g:change_color_scheme")
     " block and change font name and size for your platform.
     function! SetGuiFont()
         " Color schemes that has dark background should defined 'background' 
-        " option as 'dark' in its scheme. Thus you can use this option to use 
+        " option as 'dark' in its scheme. You can use this option to set 
         " different fonts when color scheme has dark background.
         " I found Anonymous font from on code2html script description page,
         " and it looks good (only on dark background though). 
@@ -153,11 +141,11 @@ if !exists("g:change_color_scheme")
         " endif
     endfunction   " SetGuiFont
 
-    let g:change_color_scheme="0.12"
+    let g:change_color_scheme="0.2"
 endif
 
-" get all color scheme file path and save it to color_schemes. We'll treat 
-" color_schemes as a string array which element separated by sep character. 
+" get all color scheme file path and save it to s:color_schemes. It will be 
+" treated as a string array which elements are separated by sep character. 
 let s:color_schemes = substitute(globpath(&runtimepath,"colors/*.vim"), "\n", s:sep, 'g')
 let s:total_schemes = 0
 let s:scheme_index = 0
@@ -186,13 +174,22 @@ function! PreviousColorScheme()
 endfunction
 
 " load randomly chosen color scheme
+" Vim still doesn't have a function that returns millisecons. As a result,
+" it's difficult to create a random number. My previous attempt was to call
+" localtime(). Since it's only returns seconds, calling RandomColorScheme()
+" continuosly is just same as NextColorScheme() except the first call.
+" Now I found another function getfsize(), which returns the file size. I
+" dont dare say adding localtime() and getfsize() generates random numbers, 
+" but it's better than previous one. And it looks random enough for me ^_^
+"------------------------------------------------------------------------------
 function! RandomColorScheme()
+    let s:current_scheme_fsize = getfsize(ElementAt(s:color_schemes, s:sep, s:scheme_index))
     " set a random scheme_index from (0 ... total_schemes-1).
-    let s:scheme_index = localtime() % s:total_schemes
+    let s:scheme_index = (localtime()+s:current_scheme_fsize) % s:total_schemes
     call LoadColorScheme()
 endfunction
 
-" load a color scheme that is in scheme_index
+" load a color scheme 
 function! LoadColorScheme()
     " quit if there's no color scheme
     if s:total_schemes == 0
